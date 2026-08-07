@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{{ page_title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #08111f;
+      --panel: rgba(10, 18, 32, 0.82);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --text: #f4f7fb;
+      --muted: rgba(244, 247, 251, 0.72);
+      --accent: #5eead4;
+      --accent-2: #60a5fa;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: Inter, system-ui, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(96, 165, 250, 0.18), transparent 34%),
+        radial-gradient(circle at 20% 20%, rgba(94, 234, 212, 0.12), transparent 25%),
+        linear-gradient(180deg, #07111f 0%, #0c1728 100%);
+      color: var(--text);
+    }
+
+    .shell {
+      position: relative;
+      min-height: 100%;
+      overflow: hidden;
+    }
+
+    .map {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+
+    .card {
+      pointer-events: auto;
+      backdrop-filter: blur(18px);
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .header {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 1.15rem;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      font-size: 0.94rem;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(94, 234, 212, 0.12);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .button {
+      appearance: none;
+      border: 0;
+      border-radius: 16px;
+      padding: 13px 14px;
+      font: inherit;
+      font-weight: 700;
+      color: #07111f;
+      background: linear-gradient(135deg, var(--accent), #d9f99d);
+      box-shadow: 0 14px 34px rgba(94, 234, 212, 0.22);
+    }
+
+    .button.secondary {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: none;
+    }
+
+    .footer {
+      pointer-events: auto;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .status {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .leaflet-control-attribution,
+    .leaflet-control-zoom {
+      box-shadow: none;
+    }
+
+    .leaflet-container {
+      background: #0b1324;
+      font-family: Inter, system-ui, sans-serif;
+    }
+
+    @media (min-width: 768px) {
+      .overlay {
+        padding: 22px;
+        max-width: 460px;
+      }
+
+      .title {
+        font-size: 1.35rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div id="map" class="map" aria-label="Mapa Leaflet"></div>
+
+    <div class="overlay">
+      <div class="card">
+        <div class="header">
+          <div>
+            <p class="title">{{ page_title }}</p>
+            <p class="subtitle">Vista mínima para abrir en móvil, mover el mapa y probar geolocalización sin depender del resto de la app.</p>
+          </div>
+          <div class="badge">Leaflet</div>
+        </div>
+
+        <div class="actions">
+          <button id="locateBtn" class="button" type="button">Mi ubicación</button>
+          <button id="resetBtn" class="button secondary" type="button">Volver</button>
+        </div>
+      </div>
+
+      <div class="card footer">
+        <div class="status" id="status">Listo para abrir en el móvil.</div>
+        <div class="status">Ávila · Mijares como referencia inicial</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const initialCenter = [{{ center_lat }}, {{ center_lng }}];
+    const initialZoom = {{ zoom }};
+    const status = document.getElementById('status');
+    const locateBtn = document.getElementById('locateBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const map = L.map('map', {
+      zoomControl: true,
+      preferCanvas: true,
+    }).setView(initialCenter, initialZoom);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(map);
+
+    const marker = L.marker(initialCenter).addTo(map);
+    marker.bindPopup('Centro inicial').openPopup();
+
+    let userMarker = null;
+
+    function setStatus(message) {
+      status.textContent = message;
+    }
+
+    locateBtn.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        setStatus('Este navegador no soporta geolocalización.');
+        return;
+      }
+
+      setStatus('Buscando tu ubicación...');
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const latlng = [position.coords.latitude, position.coords.longitude];
+          if (userMarker) {
+            userMarker.remove();
+          }
+          userMarker = L.marker(latlng).addTo(map).bindPopup('Tu ubicación').openPopup();
+          map.setView(latlng, 16, { animate: true });
+          setStatus(`Ubicación encontrada: ${position.coords.latitude.toFixed(5)}, ${position.coords.longitude.toFixed(5)}`);
+        },
+        () => {
+          setStatus('No se pudo obtener la ubicación. Revisa permisos de GPS.');
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 8000,
+          maximumAge: 0,
+        }
+      );
+    });
+
+    resetBtn.addEventListener('click', () => {
+      map.setView(initialCenter, initialZoom, { animate: true });
+      marker.openPopup();
+      setStatus('Mapa restaurado al punto inicial.');
+    });
+  </script>
+</body>
+</html>
