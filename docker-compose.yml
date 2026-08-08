@@ -25,7 +25,8 @@ services:
       - .:/app
     working_dir: /app/backend
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
 
   db:
@@ -40,6 +41,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   postgres_data:
