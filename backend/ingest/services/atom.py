@@ -36,11 +36,6 @@ class AtomService:
         root_url = self.get_root_url(dataset)
         response = self.session.get(root_url, timeout=30)
         response.encoding = "utf-8"
-        print("encoding:", response.encoding)
-        print("apparent_encoding:", response.apparent_encoding)
-        print("content_type:", response.headers.get("Content-Type"))
-
-
         response.raise_for_status()
         return response.text
 
