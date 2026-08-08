@@ -6,7 +6,9 @@ import unicodedata
 import re
 from dataclasses import dataclass
 from typing import Iterable
+from urllib import response
 from xml.etree import ElementTree as ET
+from django.template import response
 
 import requests
 
@@ -33,6 +35,12 @@ class AtomService:
     def get_root_feed(self, dataset: str = "cp") -> str:
         root_url = self.get_root_url(dataset)
         response = self.session.get(root_url, timeout=30)
+        response.encoding = "utf-8"
+        print("encoding:", response.encoding)
+        print("apparent_encoding:", response.apparent_encoding)
+        print("content_type:", response.headers.get("Content-Type"))
+
+
         response.raise_for_status()
         return response.text
 
