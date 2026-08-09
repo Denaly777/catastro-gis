@@ -8,7 +8,7 @@ services:
     container_name: catastro-gis
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "80:8000"
     environment:
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django-insecure-change-me}
       DJANGO_DEBUG: ${DJANGO_DEBUG:-false}
