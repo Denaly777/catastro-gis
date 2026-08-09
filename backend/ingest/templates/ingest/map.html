@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mijares (ávila)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: Inter, system-ui, sans-serif;
+      background: #08111f;
+      color: #f4f7fb;
+    }
+
+    .shell {
+      position: relative;
+      min-height: 100%;
+      overflow: hidden;
+    }
+
+    #map {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+
+    .card {
+      pointer-events: auto;
+      backdrop-filter: blur(18px);
+      background: rgba(10, 18, 32, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      padding: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 1.15rem;
+      line-height: 1.15;
+      font-weight: 800;
+    }
+
+    .subtitle,
+    .status {
+      margin: 8px 0 0;
+      color: rgba(244, 247, 251, 0.72);
+      line-height: 1.4;
+      font-size: 0.94rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(94, 234, 212, 0.12);
+      color: #5eead4;
+      font-weight: 700;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .button {
+      appearance: none;
+      border: 0;
+      border-radius: 16px;
+      padding: 13px 14px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .button.primary {
+      color: #07111f;
+      background: linear-gradient(135deg, #5eead4, #d9f99d);
+    }
+
+    .button.secondary {
+      color: #f4f7fb;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .leaflet-container {
+      background: #0b1324;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div id="map" aria-label="Mapa Leaflet"></div>
+
+    <div class="overlay">
+      <div class="card">
+        <div class="header">
+          <div>
+            <p class="title">Mijares (ávila)</p>
+            <p class="subtitle">Mapa Leaflet centrado en Mijares para probar en móvil.</p>
+          </div>
+          <div class="badge">Leaflet</div>
+        </div>
+        <div class="actions">
+          <button id="locateBtn" class="button primary" type="button">Mi ubicación</button>
+          <button id="resetBtn" class="button secondary" type="button">Volver</button>
+        </div>
+      </div>
+
+      <div class="card footer">
+        <div class="status" id="status">Cargando mapa...</div>
+        <div class="status">Mijares (Ávila)</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const initialCenter = [40.2970, -4.8368];
+    const initialZoom = 18;
+    const status = document.getElementById('status');
+    const locateBtn = document.getElementById('locateBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const map = L.map('map', {
+      zoomControl: true,
+      preferCanvas: true
+    }).setView(initialCenter, initialZoom);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 20,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const marker = L.marker(initialCenter).addTo(map);
+    marker.bindPopup('<b>Mijares 2(Ávila) 26/08/08 23:58</b><br>Centro inicial del mapa').openPopup();
+
+    let userMarker = null;
+
+    function setStatus(message) {
+      status.textContent = message;
+    }
+
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 0);
+
+    locateBtn.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        setStatus('Este navegador no soporta geolocalización.');
+        return;
+      }
+
+      setStatus('Buscando tu ubicación...');
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const latlng = [position.coords.latitude, position.coords.longitude];
+          if (userMarker) {
+            userMarker.remove();
+          }
+          userMarker = L.marker(latlng).addTo(map).bindPopup('Tu ubicación').openPopup();
+          map.setView(latlng, 16, { animate: true });
+          setStatus(`Ubicación encontrada: ${position.coords.latitude.toFixed(5)}, ${position.coords.longitude.toFixed(5)}`);
+        },
+        () => {
+          setStatus('No se pudo obtener la ubicación. Revisa permisos de GPS.');
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 8000,
+          maximumAge: 0
+        }
+      );
+    });
+
+    resetBtn.addEventListener('click', () => {
+      map.setView(initialCenter, initialZoom, { animate: true });
+      marker.openPopup();
+      setStatus('Mapa restaurado al punto inicial.');
+    });
+
+    setStatus('Mapa cargado correctamente.');
+  </script>
+</body>
+</html>
