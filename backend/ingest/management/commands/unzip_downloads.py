@@ -1,67 +1,56 @@
 from pathlib import Path
+import shutil
+import zipfile
 
 from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = "Inspecciona los GML y genera un informe en TXT"
+    help = "Descomprime los ZIP descargados"
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            help="Sobrescribe carpetas existentes sin preguntar",
+        )
 
     def handle(self, *args, **options):
 
         downloads_dir = Path("/app/backend/downloads")
 
-        output_file = downloads_dir / "gml_inspection.txt"
+        zip_files = sorted(downloads_dir.glob("*.zip"))
 
-        gml_files = sorted(
-            downloads_dir.rglob("*.gml")
-        )
+        for zip_file in zip_files:
 
-        with open(
-            output_file,
-            "w",
-            encoding="utf-8"
-        ) as output:
+            dest_dir = downloads_dir / zip_file.stem
 
-            output.write(
-                f"Se encontraron {len(gml_files)} archivos GML\n\n"
+            if dest_dir.exists():
+
+                if not options["force"]:
+
+                    respuesta = input(
+                        f"\nLa carpeta '{dest_dir.name}' ya existe.\n"
+                        "¿Sobrescribir? [s/N]: "
+                    ).strip().lower()
+
+                    if respuesta not in ("s", "si", "sí"):
+                        self.stdout.write(
+                            self.style.WARNING(
+                                f"Saltando {zip_file.name}"
+                            )
+                        )
+                        continue
+
+                shutil.rmtree(dest_dir)
+
+            dest_dir.mkdir(parents=True, exist_ok=True)
+
+            with zipfile.ZipFile(zip_file, "r") as zip_ref:
+                zip_ref.extractall(dest_dir)
+
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"Descomprimido: {zip_file.name}"
+                )
             )
-
-            for gml_file in gml_files:
-
-                output.write("\n")
-                output.write("=" * 80 + "\n")
-                output.write(f"Fichero: {gml_file.name}\n")
-                output.write(f"Ruta: {gml_file}\n")
-                output.write("=" * 80 + "\n")
-
-                try:
-
-                    with open(
-                        gml_file,
-                        "r",
-                        encoding="utf-8",
-                        errors="ignore"
-                    ) as fichero:
-
-                        for _ in range(50):
-
-                            linea = fichero.readline()
-
-                            if not linea:
-                                break
-
-                            output.write(linea)
-
-                        output.write("\n\n")
-
-                except Exception as exc:
-
-                    output.write(
-                        f"ERROR: {exc}\n\n"
-                    )
-
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"Informe generado: {output_file}"
-            )
-        )
