@@ -1,66 +1,115 @@
 # Catastro GIS
 
-Aplicación web desarrollada en Django para visualizar información geográfica del Catastro utilizando datos publicados por la Dirección General del Catastro mediante los servicios INSPIRE.
-
-## Objetivo
-
-La aplicación permite descargar, procesar y visualizar información catastral a partir de los servicios públicos INSPIRE del Catastro español.
-
-Fuente oficial de datos:
-
-[Servicios INSPIRE del Catastro](https://www.catastro.hacienda.gob.es/webinspire/index.html)
-
-## Arquitectura
-
-### Backend
-
-- Django
-- Gunicorn
-- PostgreSQL
-- PostGIS
-
-### Frontend
-
-- HTML
-- JavaScript
-- Leaflet
-- OpenStreetMap
-
-### Infraestructura
-
-- Docker
-- Docker Compose
-- AWS Lightsail
-
-## Flujo general
-
-1. La aplicación se conecta a los servicios INSPIRE del Catastro.
-2. Localiza los ficheros publicados mediante feeds ATOM.
-3. Descarga la información geográfica disponible.
-4. Procesa los datos descargados.
-5. Almacena la información en PostgreSQL/PostGIS.
-6. Publica la información mediante una aplicación web basada en Django.
-7. La visualización cartográfica se realiza con Leaflet y OpenStreetMap.
+Aplicación para la descarga, tratamiento y visualización de información catastral INSPIRE publicada por la Dirección General del Catastro.
 
 ## Fuente de datos
 
-Los datos proceden de los servicios INSPIRE publicados por la Dirección General del Catastro.
+La aplicación utiliza los servicios INSPIRE publicados por la Dirección General del Catastro:
 
-Tecnología utilizada por la fuente:
+[Catastro INSPIRE](https://www.catastro.hacienda.gob.es/webinspire/index.html)
 
-- Feed ATOM
-- GML
-- INSPIRE
-- Servicios geográficos europeos
+Los datos se distribuyen mediante feeds ATOM que contienen enlaces a ficheros ZIP.
 
-## Estructura del proyecto
+## Flujo de trabajo
 
-backend/
-    config/
-    ingest/
-    templates/
+### 1. Descubrimiento de fuentes
 
-## Punto de entrada
+La aplicación navega por la estructura de feeds ATOM del Catastro para localizar la información disponible por provincia y municipio.
+
+Los comandos relacionados se encuentran en:
+
+```text
+backend/ingest/management/commands/
+```
+
+Entre ellos:
+
+```text
+atom_root.py
+atom_region.py
+atom_municipality.py
+atom_search.py
+```
+
+### 2. Descarga
+
+Una vez localizado un municipio, se descargan los ZIP publicados por el Catastro.
+
+Ejemplos:
+
+```text
+05127-MIJARES ADDRESSES-ad.zip
+05127-MIJARES BUILDINGS-bu.zip
+05127-MIJARES CADASTRAL PARCELS-cp.zip
+
+05054-CASAVIEJA ADDRESSES-ad.zip
+05054-CASAVIEJA BUILDINGS-bu.zip
+05054-CASAVIEJA CADASTRAL PARCELS-cp.zip
+```
+
+Los archivos descargados se almacenan temporalmente en:
+
+```text
+backend/downloads/
+```
+
+### 3. Tipos de información descargada
+
+#### ADDRESSES
+
+Información de direcciones catastrales.
+
+Sufijo:
+
+```text
+-ad.zip
+```
+
+#### BUILDINGS
+
+Información de construcciones.
+
+Sufijo:
+
+```text
+-bu.zip
+```
+
+#### CADASTRAL PARCELS
+
+Información de parcelas catastrales.
+
+Sufijo:
+
+```text
+-cp.zip
+```
+
+### 4. Importación
+
+Los ZIP contienen ficheros GML conforme a la especificación INSPIRE.
+
+El procesamiento e importación se realiza mediante:
+
+```text
+atom_import.py
+```
+
+### 5. Actualización
+
+La actualización periódica de los datos se realiza mediante:
+
+```text
+atom_refresh.py
+```
+
+### 6. Visualización
+
+La aplicación web utiliza:
+
+- Django
+- Leaflet
+- OpenStreetMap
 
 Ruta principal:
 
@@ -68,26 +117,42 @@ Ruta principal:
 path('', map_view, name='home')
 ```
 
-Vista asociada:
+Template principal:
 
-```python
-def map_view(request):
-    return render(
-        request,
-        "ingest/map.html",
-        ...
-    )
+```text
+backend/ingest/templates/ingest/map.html
 ```
 
-## Despliegue
+Actualmente la vista principal muestra un mapa Leaflet centrado sobre el municipio configurado.
 
-El repositorio se encuentra en GitHub.
+## Estructura relevante
 
-El despliegue productivo se realiza en AWS Lightsail mediante Docker.
+```text
+backend/
+│
+├── downloads/
+│   ├── *.zip
+│
+├── ingest/
+│   ├── management/
+│   │   └── commands/
+│   │       ├── atom_root.py
+│   │       ├── atom_region.py
+│   │       ├── atom_municipality.py
+│   │       ├── atom_search.py
+│   │       ├── atom_download.py
+│   │       ├── atom_import.py
+│   │       └── atom_refresh.py
+│   │
+│   ├── views.py
+│   └── templates/
+│
+└── config/
+```
 
-## Pendientes
+## Municipios de prueba actuales
 
-- Automatizar descargas ATOM.
-- Mejorar visualización GIS.
-- Incorporar búsquedas por referencia catastral.
-- Incorporar análisis espacial mediante PostGIS.
+```text
+05127 - Mijares (Ávila)
+05054 - Casavieja (Ávila)
+```

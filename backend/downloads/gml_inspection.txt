@@ -1,0 +1,14 @@
+Se encontraron 12 GML
+
+/app/backend/downloads/05054-CASAVIEJA ADDRESSES-ad/A.ES.SDGC.AD.05054.gml
+/app/backend/downloads/05054-CASAVIEJA BUILDINGS-bu/A.ES.SDGC.BU.05054.building.gml
+/app/backend/downloads/05054-CASAVIEJA BUILDINGS-bu/A.ES.SDGC.BU.05054.buildingpart.gml
+/app/backend/downloads/05054-CASAVIEJA BUILDINGS-bu/A.ES.SDGC.BU.05054.otherconstruction.gml
+/app/backend/downloads/05054-CASAVIEJA CADASTRAL PARCELS-cp/A.ES.SDGC.CP.05054.cadastralparcel.gml
+/app/backend/downloads/05054-CASAVIEJA CADASTRAL PARCELS-cp/A.ES.SDGC.CP.05054.cadastralzoning.gml
+/app/backend/downloads/05127-MIJARES ADDRESSES-ad/A.ES.SDGC.AD.05127.gml
+/app/backend/downloads/05127-MIJARES BUILDINGS-bu/A.ES.SDGC.BU.05127.building.gml
+/app/backend/downloads/05127-MIJARES BUILDINGS-bu/A.ES.SDGC.BU.05127.buildingpart.gml
+/app/backend/downloads/05127-MIJARES BUILDINGS-bu/A.ES.SDGC.BU.05127.otherconstruction.gml
+/app/backend/downloads/05127-MIJARES CADASTRAL PARCELS-cp/A.ES.SDGC.CP.05127.cadastralparcel.gml
+/app/backend/downloads/05127-MIJARES CADASTRAL PARCELS-cp/A.ES.SDGC.CP.05127.cadastralzoning.gml

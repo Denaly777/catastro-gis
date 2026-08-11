@@ -1,0 +1,140 @@
+Se encontraron 12 GML
+
+
+====================================================================================================
+FICHERO: A.ES.SDGC.AD.05054.gml
+RUTA: /app/backend/downloads/05054-CASAVIEJA ADDRESSES-ad/A.ES.SDGC.AD.05054.gml
+====================================================================================================
+
+INFO: Open of `/app/backend/downloads/05054-CASAVIEJA ADDRESSES-ad/A.ES.SDGC.AD.05054.gml'
+      using driver `GML' successful.
+1: Address (Point)
+2: ThoroughfareName (None)
+3: PostalDescriptor (None)
+4: AdminUnitName (None)
+
+
+
+====================================================================================================
+FICHERO: A.ES.SDGC.BU.05054.building.gml
+RUTA: /app/backend/downloads/05054-CASAVIEJA BUILDINGS-bu/A.ES.SDGC.BU.05054.building.gml
+====================================================================================================
+
+INFO: Open of `/app/backend/downloads/05054-CASAVIEJA BUILDINGS-bu/A.ES.SDGC.BU.05054.building.gml'
+      using driver `GML' successful.
+1: Building
+
+
+
+====================================================================================================
+FICHERO: A.ES.SDGC.BU.05054.buildingpart.gml
+RUTA: /app/backend/downloads/05054-CASAVIEJA BUILDINGS-bu/A.ES.SDGC.BU.05054.buildingpart.gml
+====================================================================================================
+
+INFO: Open of `/app/backend/downloads/05054-CASAVIEJA BUILDINGS-bu/A.ES.SDGC.BU.05054.buildingpart.gml'
+      using driver `GML' successful.
+1: BuildingPart (Polygon)
+
+
+
+====================================================================================================
+FICHERO: A.ES.SDGC.BU.05054.otherconstruction.gml
+RUTA: /app/backend/downloads/05054-CASAVIEJA BUILDINGS-bu/A.ES.SDGC.BU.05054.otherconstruction.gml
+====================================================================================================
+
+INFO: Open of `/app/backend/downloads/05054-CASAVIEJA BUILDINGS-bu/A.ES.SDGC.BU.05054.otherconstruction.gml'
+      using driver `GML' successful.
+1: OtherConstruction
+
+
+
+====================================================================================================
+FICHERO: A.ES.SDGC.CP.05054.cadastralparcel.gml
+RUTA: /app/backend/downloads/05054-CASAVIEJA CADASTRAL PARCELS-cp/A.ES.SDGC.CP.05054.cadastralparcel.gml
+====================================================================================================
+
+INFO: Open of `/app/backend/downloads/05054-CASAVIEJA CADASTRAL PARCELS-cp/A.ES.SDGC.CP.05054.cadastralparcel.gml'
+      using driver `GML' successful.
+1: CadastralParcel
+
+
+
+====================================================================================================
+FICHERO: A.ES.SDGC.CP.05054.cadastralzoning.gml
+RUTA: /app/backend/downloads/05054-CASAVIEJA CADASTRAL PARCELS-cp/A.ES.SDGC.CP.05054.cadastralzoning.gml
+====================================================================================================
+
+INFO: Open of `/app/backend/downloads/05054-CASAVIEJA CADASTRAL PARCELS-cp/A.ES.SDGC.CP.05054.cadastralzoning.gml'
+      using driver `GML' successful.
+1: CadastralZoning
+
+
+
+====================================================================================================
+FICHERO: A.ES.SDGC.AD.05127.gml
+RUTA: /app/backend/downloads/05127-MIJARES ADDRESSES-ad/A.ES.SDGC.AD.05127.gml
+====================================================================================================
+
+INFO: Open of `/app/backend/downloads/05127-MIJARES ADDRESSES-ad/A.ES.SDGC.AD.05127.gml'
+      using driver `GML' successful.
+1: Address (Point)
+2: ThoroughfareName (None)
+3: PostalDescriptor (None)
+4: AdminUnitName (None)
+
+
+
+====================================================================================================
+FICHERO: A.ES.SDGC.BU.05127.building.gml
+RUTA: /app/backend/downloads/05127-MIJARES BUILDINGS-bu/A.ES.SDGC.BU.05127.building.gml
+====================================================================================================
+
+INFO: Open of `/app/backend/downloads/05127-MIJARES BUILDINGS-bu/A.ES.SDGC.BU.05127.building.gml'
+      using driver `GML' successful.
+1: Building
+
+
+
+====================================================================================================
+FICHERO: A.ES.SDGC.BU.05127.buildingpart.gml
+RUTA: /app/backend/downloads/05127-MIJARES BUILDINGS-bu/A.ES.SDGC.BU.05127.buildingpart.gml
+====================================================================================================
+
+INFO: Open of `/app/backend/downloads/05127-MIJARES BUILDINGS-bu/A.ES.SDGC.BU.05127.buildingpart.gml'
+      using driver `GML' successful.
+1: BuildingPart (Polygon)
+
+
+
+====================================================================================================
+FICHERO: A.ES.SDGC.BU.05127.otherconstruction.gml
+RUTA: /app/backend/downloads/05127-MIJARES BUILDINGS-bu/A.ES.SDGC.BU.05127.otherconstruction.gml
+====================================================================================================
+
+INFO: Open of `/app/backend/downloads/05127-MIJARES BUILDINGS-bu/A.ES.SDGC.BU.05127.otherconstruction.gml'
+      using driver `GML' successful.
+1: OtherConstruction
+
+
+
+====================================================================================================
+FICHERO: A.ES.SDGC.CP.05127.cadastralparcel.gml
+RUTA: /app/backend/downloads/05127-MIJARES CADASTRAL PARCELS-cp/A.ES.SDGC.CP.05127.cadastralparcel.gml
+====================================================================================================
+
+INFO: Open of `/app/backend/downloads/05127-MIJARES CADASTRAL PARCELS-cp/A.ES.SDGC.CP.05127.cadastralparcel.gml'
+      using driver `GML' successful.
+1: CadastralParcel
+
+
+
+====================================================================================================
+FICHERO: A.ES.SDGC.CP.05127.cadastralzoning.gml
+RUTA: /app/backend/downloads/05127-MIJARES CADASTRAL PARCELS-cp/A.ES.SDGC.CP.05127.cadastralzoning.gml
+====================================================================================================
+
+INFO: Open of `/app/backend/downloads/05127-MIJARES CADASTRAL PARCELS-cp/A.ES.SDGC.CP.05127.cadastralzoning.gml'
+      using driver `GML' successful.
+1: CadastralZoning
+
+
