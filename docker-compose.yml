@@ -35,6 +35,10 @@ services:
     image: postgis/postgis:16-3.4
     container_name: postgis
     restart: unless-stopped
+
+    ports:
+      - "5432:5432"
+      
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-catastro}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
