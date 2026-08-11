@@ -1,29 +1,63 @@
+from pathlib import Path
+
 from django.contrib.gis.geos import GEOSGeometry
 from django.contrib.gis.gdal import DataSource
 from django.core.management.base import BaseCommand
+from django.db import IntegrityError
 
 from catastro.models import Parcela
 
 
 class Command(BaseCommand):
 
-    help = "Importa todas las parcelas catastrales"
+    help = "Importa parcelas de un municipio"
+
+    def add_arguments(self, parser):
+
+        parser.add_argument(
+            "municipio_codigo",
+            type=str,
+        )
 
     def handle(self, *args, **options):
 
-        fichero = (
-            "/app/backend/downloads/"
-            "05127-MIJARES CADASTRAL PARCELS-cp/"
-            "A.ES.SDGC.CP.05127.cadastralparcel.gml"
+        municipio_codigo = options["municipio_codigo"]
+
+        patron = (
+            f"**/{municipio_codigo}-* CADASTRAL PARCELS-cp/"
+            f"A.ES.SDGC.CP.{municipio_codigo}.cadastralparcel.gml"
+        )
+
+        resultados = list(
+            Path("/app/backend/downloads").glob(patron)
+        )
+
+        if not resultados:
+
+            self.stdout.write(
+                self.style.ERROR(
+                    f"No se encontró GML para {municipio_codigo}"
+                )
+            )
+
+            return
+
+        fichero = str(resultados[0])
+
+        self.stdout.write(
+            f"Importando: {fichero}"
         )
 
         ds = DataSource(fichero)
 
         capa = ds[0]
 
-        Parcela.objects.all().delete()
+        Parcela.objects.filter(
+            municipio_codigo=municipio_codigo
+        ).delete()
 
         contador = 0
+        duplicados = 0
 
         for elemento in capa:
 
@@ -31,34 +65,54 @@ class Command(BaseCommand):
                 "nationalCadastralReference"
             )
 
-            Parcela.objects.create(
-                municipio_codigo=referencia[:5],
-                local_id=elemento.get("localId"),
-                referencia_catastral=referencia,
-                etiqueta=elemento.get("label") or "",
-                area=elemento.get("areaValue"),
-                fecha_alta=elemento.get(
-                    "beginLifespanVersion"
-                ) or "",
-                geom=GEOSGeometry(
-                    elemento.geom.wkt,
-                    srid=25830,
-                ),
-            )
+            try:
 
-            contador += 1
+                Parcela.objects.create(
+                    municipio_codigo=municipio_codigo,
+                    local_id=elemento.get("localId"),
+                    referencia_catastral=referencia,
+                    etiqueta=elemento.get("label") or "",
+                    area=elemento.get("areaValue"),
+                    fecha_alta=elemento.get(
+                        "beginLifespanVersion"
+                    ) or "",
+                    geom=GEOSGeometry(
+                        elemento.geom.wkt,
+                        srid=25830,
+                    ),
+                )
 
-            if contador % 500 == 0:
+                contador += 1
+
+                if contador % 500 == 0:
+
+                    self.stdout.write(
+                        f"Importadas {contador} parcelas..."
+                    )
+
+            except IntegrityError:
+
+                duplicados += 1
 
                 self.stdout.write(
-                    f"Importadas {contador} parcelas..."
+                    self.style.WARNING(
+                        f"DUPLICADO: {referencia}"
+                    )
                 )
+
+                continue
 
         self.stdout.write("")
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Importación completada: {contador}"
+                f"Importadas: {contador}"
+            )
+        )
+
+        self.stdout.write(
+            self.style.WARNING(
+                f"Duplicados: {duplicados}"
             )
         )
 
