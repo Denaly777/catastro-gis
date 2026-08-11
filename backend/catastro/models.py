@@ -1,5 +1,6 @@
 from django.contrib.gis.db import models
 
+
 class Parcela(models.Model):
 
     municipio_codigo = models.CharField(
@@ -9,7 +10,9 @@ class Parcela(models.Model):
         blank=True,
     )
 
-    local_id = models.CharField(max_length=50)
+    local_id = models.CharField(
+        max_length=50,
+    )
 
     referencia_catastral = models.CharField(
         max_length=20,
@@ -32,6 +35,15 @@ class Parcela(models.Model):
         blank=True,
     )
 
-    geom = models.GeometryField(
+    geom_25830 = models.GeometryField(
         srid=25830,
+        spatial_index=True,
     )
+
+    geom_4326 = models.GeometryField(
+        srid=4326,
+        spatial_index=True,
+    )
+
+    def __str__(self):
+        return self.referencia_catastral

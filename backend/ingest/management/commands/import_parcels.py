@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from django.contrib.gis.geos import GEOSGeometry
 from django.contrib.gis.gdal import DataSource
+from django.contrib.gis.geos import GEOSGeometry
 from django.core.management.base import BaseCommand
 from django.db import IntegrityError
 
@@ -21,7 +21,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        municipio_codigo = options["municipio_codigo"]
+        municipio_codigo = options[
+            "municipio_codigo"
+        ]
+
+        downloads_path = Path(
+            "downloads"
+        )
 
         patron = (
             f"**/{municipio_codigo}-* CADASTRAL PARCELS-cp/"
@@ -29,7 +35,9 @@ class Command(BaseCommand):
         )
 
         resultados = list(
-            Path("/app/backend/downloads").glob(patron)
+            downloads_path.glob(
+                patron
+            )
         )
 
         if not resultados:
@@ -40,15 +48,28 @@ class Command(BaseCommand):
                 )
             )
 
+            self.stdout.write(
+                f"Ruta buscada: "
+                f"{downloads_path.resolve()}"
+            )
+
+            self.stdout.write(
+                f"Patrón: {patron}"
+            )
+
             return
 
-        fichero = str(resultados[0])
+        fichero = str(
+            resultados[0]
+        )
 
         self.stdout.write(
             f"Importando: {fichero}"
         )
 
-        ds = DataSource(fichero)
+        ds = DataSource(
+            fichero
+        )
 
         capa = ds[0]
 
@@ -59,27 +80,62 @@ class Command(BaseCommand):
         contador = 0
         duplicados = 0
 
+        referencias_vistas = set()
+
         for elemento in capa:
 
             referencia = elemento.get(
                 "nationalCadastralReference"
             )
 
+            if not referencia:
+                continue
+
+            if referencia in referencias_vistas:
+
+                duplicados += 1
+
+                continue
+
+            referencias_vistas.add(
+                referencia
+            )
+
+            geom_25830 = GEOSGeometry(
+                elemento.geom.wkt,
+                srid=25830,
+            )
+
+            geom_4326 = geom_25830.transform(
+                4326,
+                clone=True,
+            )
+
             try:
 
                 Parcela.objects.create(
                     municipio_codigo=municipio_codigo,
-                    local_id=elemento.get("localId"),
-                    referencia_catastral=referencia,
-                    etiqueta=elemento.get("label") or "",
-                    area=elemento.get("areaValue"),
-                    fecha_alta=elemento.get(
-                        "beginLifespanVersion"
-                    ) or "",
-                    geom=GEOSGeometry(
-                        elemento.geom.wkt,
-                        srid=25830,
+                    local_id=elemento.get(
+                        "localId"
                     ),
+                    referencia_catastral=referencia,
+                    etiqueta=(
+                        elemento.get(
+                            "label"
+                        )
+                        or ""
+                    ),
+                    area=elemento.get(
+                        "areaValue"
+                    ),
+                    fecha_alta=(
+                        elemento.get(
+                            "beginLifespanVersion"
+                        )
+                        or ""
+                    ),
+                    geom_25830=geom_25830,
+                    geom_4326=geom_4326,
                 )
 
                 contador += 1
@@ -117,5 +173,6 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(
-            f"Parcelas en BD: {Parcela.objects.count()}"
+            f"Parcelas en BD: "
+            f"{Parcela.objects.count()}"
         )

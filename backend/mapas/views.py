@@ -1,6 +1,5 @@
 import json
 
-from django.contrib.gis.db.models.functions import Transform
 from django.contrib.gis.geos import Polygon
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -35,13 +34,15 @@ def mapa(request):
 
 
 def parcelas_geojson(request):
-    municipio_codigo = request.GET.get("municipio")
+    municipio_codigo = request.GET.get(
+        "municipio"
+    )
+
     bbox = request.GET.get("bbox")
     zoom = request.GET.get("zoom")
 
     parcelas = Parcela.objects.all()
 
-    # Filtrar por municipio si se recibe
     if (
         municipio_codigo
         and len(municipio_codigo) == 5
@@ -50,10 +51,6 @@ def parcelas_geojson(request):
         parcelas = parcelas.filter(
             municipio_codigo=municipio_codigo
         )
-
-    parcelas = parcelas.annotate(
-        geom_4326=Transform("geom", 4326)
-    )
 
     if bbox:
         try:
@@ -73,15 +70,8 @@ def parcelas_geojson(request):
 
             bbox_polygon.srid = 4326
 
-            bbox_polygon_25830 = (
-                bbox_polygon.transform(
-                    25830,
-                    clone=True,
-                )
-            )
-
             parcelas = parcelas.filter(
-                geom__intersects=bbox_polygon_25830
+                geom_4326__intersects=bbox_polygon
             )
 
         except ValueError:
@@ -95,7 +85,10 @@ def parcelas_geojson(request):
 
     features = []
 
-    for parcela in parcelas.iterator(chunk_size=500):
+    for parcela in parcelas.iterator(
+        chunk_size=500
+    ):
+
         geometry = _simplify_geometry(
             parcela.geom_4326,
             zoom_value,
@@ -109,8 +102,12 @@ def parcelas_geojson(request):
                 ),
                 "properties": {
                     "id": parcela.id,
-                    "referencia": parcela.referencia_catastral,
-                    "municipio": parcela.municipio_codigo,
+                    "referencia": (
+                        parcela.referencia_catastral
+                    ),
+                    "municipio": (
+                        parcela.municipio_codigo
+                    ),
                 },
             }
         )

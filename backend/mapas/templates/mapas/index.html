@@ -16,16 +16,40 @@
     <style>
 
         html,
-        body,
-        #map {
+        body {
             height: 100%;
             margin: 0;
             padding: 0;
         }
 
+        #toolbar {
+            height: 50px;
+            padding: 8px;
+            background: white;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        #municipio {
+            width: 120px;
+            padding: 4px;
+        }
+
+        #map {
+            height: calc(100vh - 50px);
+        }
+
+        button {
+            cursor: pointer;
+        }
+
     </style>
 
 </head>
+
 <body>
 
     <div id="toolbar">
@@ -43,7 +67,11 @@
         >
 
         <button id="btnCargar">
-            Cargar
+            Cargar municipio
+        </button>
+
+        <button id="btnRefrescar">
+            Refrescar parcelas visibles
         </button>
 
     </div>
@@ -54,9 +82,12 @@
 
     <script>
 
-        const map = L.map("map", {
-            preferCanvas: true
-        }).setView(
+        const map = L.map(
+            "map",
+            {
+                preferCanvas: true
+            }
+        ).setView(
             [40.2970, -4.8368],
             18
         );
@@ -78,8 +109,17 @@
                 .value
                 .trim();
 
-            if (!municipio) {
+            if (
+                municipio.length !== 5 ||
+                !/^\d+$/.test(municipio)
+            ) {
+
+                alert(
+                    "Debe indicar un código de municipio válido de 5 dígitos."
+                );
+
                 return;
+
             }
 
             const bounds = map.getBounds();
@@ -92,15 +132,22 @@
                 bounds.getNorth()
             ].join(",");
 
+            console.log(
+                "Cargando bbox:",
+                bbox
+            );
+
             fetch(
                 `/api/parcelas/?municipio=${municipio}&bbox=${encodeURIComponent(bbox)}&zoom=${zoom}`
             )
             .then(response => {
 
                 if (!response.ok) {
+
                     throw new Error(
                         `Error HTTP ${response.status}`
                     );
+
                 }
 
                 return response.json();
@@ -109,7 +156,11 @@
             .then(data => {
 
                 if (parcelasLayer) {
-                    map.removeLayer(parcelasLayer);
+
+                    map.removeLayer(
+                        parcelasLayer
+                    );
+
                 }
 
                 parcelasLayer = L.geoJSON(
@@ -125,16 +176,29 @@
                             fillOpacity: 0
                         },
 
-                        onEachFeature(feature, layer) {
+                        onEachFeature(
+                            feature,
+                            layer
+                        ) {
 
                             layer.bindPopup(
-                                feature.properties.referencia ||
-                                "Sin referencia"
+                                `
+                                <b>Referencia:</b>
+                                ${feature.properties.referencia}
+                                <br>
+                                <b>Municipio:</b>
+                                ${feature.properties.municipio}
+                                `
                             );
 
                         }
+
                     }
                 ).addTo(map);
+
+                console.log(
+                    `Parcelas cargadas: ${data.features.length}`
+                );
 
             })
             .catch(error => {
@@ -150,27 +214,47 @@
         }
 
         document
-            .getElementById("btnCargar")
+            .getElementById(
+                "btnCargar"
+            )
             .addEventListener(
                 "click",
                 cargarParcelas
             );
 
         document
-            .getElementById("municipio")
+            .getElementById(
+                "btnRefrescar"
+            )
+            .addEventListener(
+                "click",
+                cargarParcelas
+            );
+
+        document
+            .getElementById(
+                "municipio"
+            )
             .addEventListener(
                 "keydown",
                 function(event) {
 
-                    if (event.key === "Enter") {
+                    if (
+                        event.key === "Enter"
+                    ) {
+
                         cargarParcelas();
+
                     }
 
                 }
             );
 
-        map.on("moveend", cargarParcelas);
-        map.on("zoomend", cargarParcelas);
+        // NO recargamos automáticamente
+        // al mover o hacer zoom
+
+        // map.on("moveend", cargarParcelas);
+        // map.on("zoomend", cargarParcelas);
 
         cargarParcelas();
 
