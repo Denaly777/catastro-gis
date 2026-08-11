@@ -1,3 +1,123 @@
+import json
+
+from django.contrib.gis.db.models.functions import Transform
+from django.contrib.gis.geos import Polygon
+from django.http import JsonResponse
 from django.shortcuts import render
 
-# Create your views here.
+from catastro.models import Parcela
+
+
+def _simplify_geometry(geometry, zoom):
+    if zoom is None:
+        return geometry
+
+    if zoom >= 16:
+        tolerance = 0.000002
+    elif zoom >= 13:
+        tolerance = 0.00001
+    elif zoom >= 10:
+        tolerance = 0.00002
+    else:
+        tolerance = 0.00005
+
+    return geometry.simplify(
+        tolerance,
+        preserve_topology=True,
+    )
+
+
+def mapa(request):
+    return render(
+        request,
+        "mapas/index.html",
+    )
+
+
+def parcelas_geojson(request):
+    municipio_codigo = request.GET.get("municipio")
+    bbox = request.GET.get("bbox")
+    zoom = request.GET.get("zoom")
+
+    parcelas = Parcela.objects.all()
+
+    # Filtrar por municipio si se recibe
+    if (
+        municipio_codigo
+        and len(municipio_codigo) == 5
+        and municipio_codigo.isdigit()
+    ):
+        parcelas = parcelas.filter(
+            municipio_codigo=municipio_codigo
+        )
+
+    parcelas = parcelas.annotate(
+        geom_4326=Transform("geom", 4326)
+    )
+
+    if bbox:
+        try:
+            min_lng, min_lat, max_lng, max_lat = [
+                float(value)
+                for value in bbox.split(",")
+            ]
+
+            bbox_polygon = Polygon.from_bbox(
+                (
+                    min_lng,
+                    min_lat,
+                    max_lng,
+                    max_lat,
+                )
+            )
+
+            bbox_polygon.srid = 4326
+
+            bbox_polygon_25830 = (
+                bbox_polygon.transform(
+                    25830,
+                    clone=True,
+                )
+            )
+
+            parcelas = parcelas.filter(
+                geom__intersects=bbox_polygon_25830
+            )
+
+        except ValueError:
+            pass
+
+    zoom_value = (
+        int(zoom)
+        if zoom and zoom.isdigit()
+        else None
+    )
+
+    features = []
+
+    for parcela in parcelas.iterator(chunk_size=500):
+        geometry = _simplify_geometry(
+            parcela.geom_4326,
+            zoom_value,
+        )
+
+        features.append(
+            {
+                "type": "Feature",
+                "geometry": json.loads(
+                    geometry.geojson
+                ),
+                "properties": {
+                    "id": parcela.id,
+                    "referencia": parcela.referencia_catastral,
+                    "municipio": parcela.municipio_codigo,
+                },
+            }
+        )
+
+    return JsonResponse(
+        {
+            "type": "FeatureCollection",
+            "features": features,
+        }
+    )
