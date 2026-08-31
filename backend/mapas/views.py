@@ -1,6 +1,5 @@
 import json
 
-from django.contrib.gis.geos import Polygon
 from django.http import JsonResponse
 from django.shortcuts import render
 
@@ -33,7 +32,6 @@ def mapa(request):
 
 def parcelas_geojson(request):
     municipio_codigo = request.GET.get("municipio")
-    bbox = request.GET.get("bbox")
     zoom = request.GET.get("zoom")
 
     parcelas = Parcela.objects.only(
@@ -52,30 +50,6 @@ def parcelas_geojson(request):
         parcelas = parcelas.filter(
             municipio_codigo=municipio_codigo
         )
-
-    if bbox:
-        try:
-            min_lng, min_lat, max_lng, max_lat = map(
-                float,
-                bbox.split(","),
-            )
-
-            bbox_polygon = Polygon.from_bbox(
-                (
-                    min_lng,
-                    min_lat,
-                    max_lng,
-                    max_lat,
-                )
-            )
-            bbox_polygon.srid = 4326
-
-            parcelas = parcelas.filter(
-                geom_4326__intersects=bbox_polygon
-            )
-
-        except ValueError:
-            pass
 
     zoom_value = (
         int(zoom)

@@ -38,22 +38,22 @@ class ParcelasGeojsonViewTests(TestCase):
         }
         self.assertEqual(referencias, {"05127A00100001", "05127A00100002"})
 
-    def test_bbox_param_filters_visible_parcels(self):
+    def test_municipio_param_filters_parcels(self):
         Parcela.objects.create(
             municipio_codigo="05127",
-            local_id="test-visible",
+            local_id="test-municipio-match",
             referencia_catastral="05127A00100003",
-            etiqueta="Visible",
+            etiqueta="Match",
             geom=GEOSGeometry(
                 "POINT(343045.1352 4462769.17525)",
                 srid=25830,
             ),
         )
         Parcela.objects.create(
-            municipio_codigo="05127",
-            local_id="test-hidden",
+            municipio_codigo="05054",
+            local_id="test-municipio-other",
             referencia_catastral="05127A00100004",
-            etiqueta="Hidden",
+            etiqueta="Other",
             geom=GEOSGeometry(
                 "POINT(1000000 1000000)",
                 srid=25830,
@@ -63,7 +63,7 @@ class ParcelasGeojsonViewTests(TestCase):
         response = self.client.get(
             "/api/parcelas/",
             {
-                "bbox": "-4.85,40.30,-4.84,40.31",
+                "municipio": "05127",
             },
         )
 

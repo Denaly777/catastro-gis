@@ -42,6 +42,17 @@
             height: calc(100vh - 50px);
         }
 
+        #estado {
+            margin-left: 8px;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        #estado.cargando {
+            color: #1d4ed8;
+            font-weight: 600;
+        }
+
         button {
             cursor: pointer;
         }
@@ -70,9 +81,7 @@
             Cargar municipio
         </button>
 
-        <button id="btnRefrescar">
-            Refrescar parcelas visibles
-        </button>
+        <span id="estado"></span>
 
     </div>
 
@@ -101,6 +110,13 @@
         ).addTo(map);
 
         let parcelasLayer = null;
+        let ultimoMunicipioCargado = null;
+
+        function setEstado(texto, cargando = false) {
+            const estadoEl = document.getElementById("estado");
+            estadoEl.textContent = texto;
+            estadoEl.classList.toggle("cargando", cargando);
+        }
 
         function cargarParcelas() {
 
@@ -122,23 +138,13 @@
 
             }
 
-            const bounds = map.getBounds();
-            const zoom = map.getZoom();
-
-            const bbox = [
-                bounds.getWest(),
-                bounds.getSouth(),
-                bounds.getEast(),
-                bounds.getNorth()
-            ].join(",");
-
-            console.log(
-                "Cargando bbox:",
-                bbox
+            setEstado(
+                `Cargando datos de Municipio ${municipio}...`,
+                true
             );
 
             fetch(
-                `/api/parcelas/?municipio=${municipio}&bbox=${encodeURIComponent(bbox)}&zoom=${zoom}`
+                `/api/parcelas/?municipio=${municipio}`
             )
             .then(response => {
 
@@ -196,14 +202,38 @@
                     }
                 ).addTo(map);
 
+                if (
+                    municipio !== ultimoMunicipioCargado &&
+                    data.features.length > 0
+                ) {
+                    const bounds = parcelasLayer.getBounds();
+
+                    if (bounds.isValid()) {
+                        map.fitBounds(
+                            bounds,
+                            { maxZoom: 18 }
+                        );
+                    }
+                }
+
+                ultimoMunicipioCargado = municipio;
+
                 console.log(
                     `Parcelas cargadas: ${data.features.length}`
+                );
+
+                setEstado(
+                    `Municipio ${municipio}: ${data.features.length} parcelas cargadas.`
                 );
 
             })
             .catch(error => {
 
                 console.error(error);
+
+                setEstado(
+                    `Error cargando datos de Municipio ${municipio}.`
+                );
 
                 alert(
                     "Error cargando parcelas"
@@ -216,15 +246,6 @@
         document
             .getElementById(
                 "btnCargar"
-            )
-            .addEventListener(
-                "click",
-                cargarParcelas
-            );
-
-        document
-            .getElementById(
-                "btnRefrescar"
             )
             .addEventListener(
                 "click",
