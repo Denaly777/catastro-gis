@@ -38,6 +38,31 @@
             padding: 4px;
         }
 
+        #mapaBase {
+            width: 200px;
+            padding: 4px;
+        }
+
+        #colorParcelas {
+            width: 44px;
+            height: 32px;
+            padding: 0;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        #anchoLineaParcelas {
+            width: 110px;
+        }
+
+        #anchoLineaValor {
+            min-width: 24px;
+            font-size: 13px;
+            color: #374151;
+            text-align: right;
+        }
+
         #map {
             height: calc(100vh - 50px);
         }
@@ -55,6 +80,20 @@
 
         button {
             cursor: pointer;
+        }
+
+        a {
+            text-decoration: none;
+            color: #464feb;
+        }
+
+        tr th,
+        tr td {
+            border: 1px solid #e6e6e6;
+        }
+
+        tr th {
+            background-color: #f5f5f5;
         }
 
     </style>
@@ -81,6 +120,58 @@
             Cargar municipio
         </button>
 
+        <label for="mapaBase">
+            Mapa base:
+        </label>
+
+        <select id="mapaBase">
+            <option value="osm">OpenStreetMap</option>
+            <option value="osmHot">OpenStreetMap Humanitarian</option>
+            <option value="cyclosm">CyclOSM</option>
+            <option value="copernicusS2">Copernicus Sentinel-2</option>
+            <option value="topo">OpenTopoMap</option>
+            <option value="esriTerrain">Esri World Terrain Base</option>
+            <option value="cartoLight">CartoDB Positron</option>
+            <option value="cartoVoyager">CartoDB Voyager</option>
+            <option value="cartoDark">CartoDB Dark Matter</option>
+            <option value="esriSat">Esri World Imagery</option>
+            <option value="esriTopo">Esri World Topo Map</option>
+            <option value="esriGray">Esri World Light Gray Canvas</option>
+            <option value="esriNatGeo">Esri NatGeo World Map</option>
+            {% if google_maps_api_key %}
+            <option value="googleRoad">Google Roadmap</option>
+            <option value="googleSat">Google Satellite</option>
+            <option value="googleHybrid">Google Hybrid</option>
+            {% endif %}
+        </select>
+
+        <label for="colorParcelas">
+            Color parcelas:
+        </label>
+
+        <input
+            id="colorParcelas"
+            type="color"
+            value="#1d4ed8"
+            title="Color de líneas de parcelas"
+        >
+
+        <label for="anchoLineaParcelas">
+            Ancho línea:
+        </label>
+
+        <input
+            id="anchoLineaParcelas"
+            type="range"
+            min="0.5"
+            max="6"
+            step="0.5"
+            value="1"
+            title="Ancho de línea de parcelas"
+        >
+
+        <span id="anchoLineaValor">1</span>
+
         <span id="estado"></span>
 
     </div>
@@ -88,26 +179,300 @@
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
+    {% if google_maps_api_key %}
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key|urlencode }}"></script>
+    <script src="https://unpkg.com/leaflet.gridlayer.googlemutant@0.14.0/Leaflet.GoogleMutant.js"></script>
+    {% endif %}
 
     <script>
 
         const map = L.map(
             "map",
             {
-                preferCanvas: true
+                preferCanvas: true,
+                rotate: true,
+                bearing: 0,
+                touchRotate: true,
+                rotateControl: {
+                    closeOnZeroBearing: false,
+                    position: "topright"
+                }
             }
         ).setView(
             [40.2970, -4.8368],
             18
         );
 
-        L.tileLayer(
-            "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        const mapasBaseConfig = {
+            osm: {
+                url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                options: {
+                    maxZoom: 19,
+                    attribution: "&copy; OpenStreetMap"
+                }
+            },
+            osmHot: {
+                url: "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
+                options: {
+                    maxZoom: 19,
+                    attribution: "&copy; OpenStreetMap contributors, tiles style by Humanitarian OpenStreetMap Team hosted by OpenStreetMap France"
+                }
+            },
+            cyclosm: {
+                url: "https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png",
+                options: {
+                    maxZoom: 20,
+                    attribution: "&copy; OpenStreetMap contributors, CyclOSM"
+                }
+            },
+            copernicusS2: {
+                url: "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2023_3857/default/g/{z}/{y}/{x}.jpg",
+                options: {
+                    maxZoom: 18,
+                    attribution: "Sentinel-2 cloudless by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2023)"
+                }
+            },
+            topo: {
+                url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+                options: {
+                    maxZoom: 17,
+                    attribution: "Map data: &copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap"
+                }
+            },
+            esriTerrain: {
+                url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}",
+                options: {
+                    maxZoom: 13,
+                    attribution: "Tiles &copy; Esri"
+                }
+            },
+            cartoLight: {
+                url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                options: {
+                    maxZoom: 20,
+                    subdomains: "abcd",
+                    attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
+                }
+            },
+            cartoVoyager: {
+                url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+                options: {
+                    maxZoom: 20,
+                    subdomains: "abcd",
+                    attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
+                }
+            },
+            cartoDark: {
+                url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+                options: {
+                    maxZoom: 20,
+                    subdomains: "abcd",
+                    attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
+                }
+            },
+            esriSat: {
+                url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                options: {
+                    maxZoom: 19,
+                    attribution: "Tiles &copy; Esri"
+                }
+            },
+            esriTopo: {
+                url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+                options: {
+                    maxZoom: 19,
+                    attribution: "Tiles &copy; Esri"
+                }
+            },
+            esriGray: {
+                url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+                options: {
+                    maxZoom: 16,
+                    attribution: "Tiles &copy; Esri"
+                }
+            },
+            esriNatGeo: {
+                url: "https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}",
+                options: {
+                    maxZoom: 16,
+                    attribution: "Tiles &copy; Esri"
+                }
+            }
+        };
+
+        {% if google_maps_api_key %}
+        mapasBaseConfig.googleRoad = {
+            googleMutantType: "roadmap",
+            options: {
+                maxZoom: 21,
+                attribution: "Map data &copy; Google"
+            }
+        };
+
+        mapasBaseConfig.googleSat = {
+            googleMutantType: "satellite",
+            options: {
+                maxZoom: 21,
+                attribution: "Map data &copy; Google"
+            }
+        };
+
+        mapasBaseConfig.googleHybrid = {
+            googleMutantType: "hybrid",
+            options: {
+                maxZoom: 21,
+                attribution: "Map data &copy; Google"
+            }
+        };
+        {% endif %}
+
+        const mapaBaseSelect = document.getElementById("mapaBase");
+        const colorParcelasInput = document.getElementById("colorParcelas");
+        const anchoLineaParcelasInput = document.getElementById("anchoLineaParcelas");
+        const anchoLineaValor = document.getElementById("anchoLineaValor");
+        const capasBasePorClave = {};
+        const capasBaseParaControl = {};
+        const capasOverlayParaControl = {};
+        const clavePorIdCapa = new Map();
+        let capaMapaBase = null;
+        let colorLineasParcelas = colorParcelasInput.value;
+        let anchoLineaParcelas = parseFloat(anchoLineaParcelasInput.value);
+
+        function actualizarEtiquetaAnchoLinea() {
+            anchoLineaValor.textContent = anchoLineaParcelas.toFixed(1).replace(/\.0$/, "");
+        }
+
+        function getEstiloParcelas() {
+            return {
+                color: colorLineasParcelas,
+                weight: anchoLineaParcelas,
+                opacity: 0.95,
+                fillColor: colorLineasParcelas,
+                fillOpacity: 0
+            };
+        }
+
+        function aplicarColorParcelas() {
+            if (!parcelasLayer) {
+                return;
+            }
+
+            parcelasLayer.setStyle(
+                getEstiloParcelas()
+            );
+        }
+
+        function crearCapaMapaBase(config) {
+
+            if (config.googleMutantType) {
+                return L.gridLayer.googleMutant(
+                    {
+                        type: config.googleMutantType,
+                        maxZoom: config.options.maxZoom
+                    }
+                );
+            }
+
+            return L.tileLayer(config.url, config.options);
+
+        }
+
+        function registrarCapasBase() {
+
+            Array.from(mapaBaseSelect.options).forEach(function(option) {
+
+                const clave = option.value;
+                const etiqueta = option.textContent.trim();
+                const config = mapasBaseConfig[clave];
+
+                if (!config) {
+                    return;
+                }
+
+                const capa = crearCapaMapaBase(config);
+
+                capasBasePorClave[clave] = capa;
+                capasBaseParaControl[etiqueta] = capa;
+                clavePorIdCapa.set(L.stamp(capa), clave);
+
+            });
+
+        }
+
+        function cambiarMapaBase(claveMapa) {
+
+            const capaNueva = capasBasePorClave[claveMapa];
+
+            if (!capaNueva) {
+                return;
+            }
+
+            if (capaMapaBase === capaNueva) {
+                return;
+            }
+
+            if (capaMapaBase) {
+                map.removeLayer(capaMapaBase);
+            }
+
+            capaMapaBase = capaNueva;
+            map.addLayer(capaMapaBase);
+
+        }
+
+        registrarCapasBase();
+
+        const CATASTRO_MAX_NATIVE_ZOOM = 18;
+
+        const capaCatastroWms = L.tileLayer.wms(
+            "https://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx",
             {
-                maxZoom: 19,
-                attribution: "&copy; OpenStreetMap"
+                layers: "Catastro",
+                format: "image/png",
+                transparent: true,
+                version: "1.1.1",
+                tiled: true,
+                maxNativeZoom: CATASTRO_MAX_NATIVE_ZOOM,
+                maxZoom: 24,
+                zIndex: 500,
+                attribution: "Direccion General del Catastro"
             }
         ).addTo(map);
+
+        capasOverlayParaControl["Catastro (WMS)"] = capaCatastroWms;
+
+        L.control.layers(
+            capasBaseParaControl,
+            capasOverlayParaControl,
+            {
+                position: "topright"
+            }
+        ).addTo(map);
+
+        map.on(
+            "baselayerchange",
+            function(event) {
+
+                const claveMapa = clavePorIdCapa.get(
+                    L.stamp(event.layer)
+                );
+
+                capaMapaBase = event.layer;
+
+                if (
+                    claveMapa &&
+                    mapaBaseSelect.value !== claveMapa
+                ) {
+                    mapaBaseSelect.value = claveMapa;
+                }
+
+            }
+        );
+
+        cambiarMapaBase(
+            mapaBaseSelect.value || "osm"
+        );
 
         let parcelasLayer = null;
         let ultimoMunicipioCargado = null;
@@ -174,13 +539,7 @@
                     {
                         renderer: L.canvas(),
 
-                        style: {
-                            color: "#1d4ed8",
-                            weight: 1,
-                            opacity: 0.95,
-                            fillColor: "#1d4ed8",
-                            fillOpacity: 0
-                        },
+                        style: getEstiloParcelas(),
 
                         onEachFeature(
                             feature,
@@ -270,6 +629,34 @@
 
                 }
             );
+
+        mapaBaseSelect.addEventListener(
+            "change",
+            function(event) {
+                cambiarMapaBase(
+                    event.target.value
+                );
+            }
+        );
+
+        colorParcelasInput.addEventListener(
+            "input",
+            function(event) {
+                colorLineasParcelas = event.target.value;
+                aplicarColorParcelas();
+            }
+        );
+
+        anchoLineaParcelasInput.addEventListener(
+            "input",
+            function(event) {
+                anchoLineaParcelas = parseFloat(event.target.value);
+                actualizarEtiquetaAnchoLinea();
+                aplicarColorParcelas();
+            }
+        );
+
+        actualizarEtiquetaAnchoLinea();
 
         // NO recargamos automáticamente
         // al mover o hacer zoom

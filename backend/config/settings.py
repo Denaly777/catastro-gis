@@ -153,6 +153,11 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+GOOGLE_MAPS_API_KEY = os.environ.get(
+    'GOOGLE_MAPS_API_KEY',
+    '',
+).strip()
+
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
