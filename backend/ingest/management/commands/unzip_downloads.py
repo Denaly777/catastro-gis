@@ -17,7 +17,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        downloads_dir = Path("/app/backend/downloads")
+        downloads_dir = Path.cwd() / "downloads"
 
         zip_files = sorted(downloads_dir.glob("*.zip"))
 

@@ -106,6 +106,11 @@ class AtomService:
     def parse_region_feed(self, region_query: str, dataset: str = "cp") -> list[AtomEntry]:
         return self.parse_feed(self.get_region_feed(region_query, dataset))
 
+    def parse_region_entry_feed(self, region_entry: AtomEntry) -> list[AtomEntry]:
+        response = self.session.get(region_entry.href, timeout=30)
+        response.raise_for_status()
+        return self.parse_feed(response.text)
+
     def list_region(self, region_query: str, dataset: str = "cp") -> list[AtomEntry]:
         return self.parse_region_feed(region_query, dataset)
 
@@ -176,6 +181,60 @@ class AtomService:
         for dataset in ("cp", "ad", "bu"):
             downloads.append((dataset, self.find_municipality_entry(region_query, municipality_query, dataset)))
         return downloads
+
+    def find_municipalities_across_regions(
+        self,
+        municipality_query: str,
+        dataset: str = "cp",
+        limit: int = 20,
+    ) -> list[dict[str, str]]:
+        normalized_municipality_code = self.normalize_municipality_code(municipality_query)
+        normalized_municipality_query = self.normalize_text(municipality_query)
+        root_entries = self.parse_root_feed(dataset)
+        matches: list[dict[str, str]] = []
+        seen_hrefs: set[str] = set()
+
+        for region_entry in root_entries:
+            region_municipalities = self.parse_region_entry_feed(region_entry)
+
+            for municipality_entry in region_municipalities:
+                if normalized_municipality_code in municipality_entry.href:
+                    pass
+                elif normalized_municipality_code in municipality_entry.title:
+                    pass
+                elif self.entry_matches_query(municipality_entry, normalized_municipality_query):
+                    pass
+                else:
+                    continue
+
+                if municipality_entry.href in seen_hrefs:
+                    continue
+
+                seen_hrefs.add(municipality_entry.href)
+
+                municipality_code_match = re.search(
+                    r"(\d{5})",
+                    municipality_entry.title or municipality_entry.href,
+                )
+                municipality_code = municipality_code_match.group(1) if municipality_code_match else ""
+                region_code = municipality_code[:2] if municipality_code else ""
+
+                matches.append(
+                    {
+                        "dataset": self.normalize_dataset(dataset),
+                        "region_code": region_code,
+                        "region_title": region_entry.title,
+                        "region_href": region_entry.href,
+                        "municipality_code": municipality_code,
+                        "municipality_title": municipality_entry.title,
+                        "municipality_href": municipality_entry.href,
+                    }
+                )
+
+                if len(matches) >= limit:
+                    return matches
+
+        return matches
 
     def as_dicts(self, entries: Iterable[AtomEntry]) -> list[dict[str, str]]:
         return [{"title": entry.title, "href": entry.href} for entry in entries]

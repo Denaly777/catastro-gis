@@ -7,3 +7,5 @@ catastro-gis.code-workspace
 .env
 .env.*
 !.env.example
+backend/downloads/
+downloads/
