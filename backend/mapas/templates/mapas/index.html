@@ -333,7 +333,6 @@
         const anchoLineaValor = document.getElementById("anchoLineaValor");
         const capasBasePorClave = {};
         const capasBaseParaControl = {};
-        const capasOverlayParaControl = {};
         const clavePorIdCapa = new Map();
         let capaMapaBase = null;
         let colorLineasParcelas = colorParcelasInput.value;
@@ -423,28 +422,9 @@
 
         registrarCapasBase();
 
-        const CATASTRO_MAX_NATIVE_ZOOM = 18;
-
-        const capaCatastroWms = L.tileLayer.wms(
-            "https://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx",
-            {
-                layers: "Catastro",
-                format: "image/png",
-                transparent: true,
-                version: "1.1.1",
-                tiled: true,
-                maxNativeZoom: CATASTRO_MAX_NATIVE_ZOOM,
-                maxZoom: 24,
-                zIndex: 500,
-                attribution: "Direccion General del Catastro"
-            }
-        ).addTo(map);
-
-        capasOverlayParaControl["Catastro (WMS)"] = capaCatastroWms;
-
         L.control.layers(
             capasBaseParaControl,
-            capasOverlayParaControl,
+            null,
             {
                 position: "topright"
             }
